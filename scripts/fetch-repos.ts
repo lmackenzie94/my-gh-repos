@@ -39,7 +39,8 @@ async function fetchAllData() {
         updated_at: repo.updated_at,
         topics: repo.topics || [],
         visibility: repo.visibility,
-        html_url: repo.html_url
+        html_url: repo.html_url,
+        languages: [] // populated below
       }));
 
       allRepos.push(...repos);
@@ -47,15 +48,13 @@ async function fetchAllData() {
       page++;
     }
 
-    // Fetch languages for each repo
-    const languagesMap = new Map();
     for (const repo of allRepos) {
       console.log(`Fetching languages for ${repo.name}...`);
       const languages = await octokit.rest.repos.listLanguages({
         owner: USERNAME,
         repo: repo.name
       });
-      languagesMap.set(repo.name, Object.keys(languages.data));
+      repo.languages = Object.keys(languages.data);
     }
 
     // Create data directory if it doesn't exist
@@ -68,11 +67,6 @@ async function fetchAllData() {
     fs.writeFileSync(
       path.join(dataDir, 'repos.json'),
       JSON.stringify(allRepos, null, 2)
-    );
-
-    fs.writeFileSync(
-      path.join(dataDir, 'languages.json'),
-      JSON.stringify(Object.fromEntries(languagesMap), null, 2)
     );
 
     console.log('Data fetched and saved successfully!');

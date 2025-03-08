@@ -35,8 +35,21 @@ export const DEV_ICONS_MAP = {
   Sass: 'sass-plain',
   PHP: 'php-plain',
   Wordpress: 'wordpress-plain',
-  Blade: 'blade-plain',
-  'Objective-C': 'objectivec-plain',
   Handlebars: 'handlebars-plain',
-  Java: 'java-plain'
+  Java: 'java-plain',
+  'Jupyter Notebook': 'jupyter-plain',
+  Solidity: 'solidity-plain'
 };
+
+export const LANGUAGES_TO_HIDE = [
+  'Objective-C',
+  'Blade',
+  'PLpgSQL',
+  'PLSQL',
+  'XSLT',
+  'EJS',
+  'Procfile',
+  'Starlark',
+  'Hack',
+  'Twig'
+];

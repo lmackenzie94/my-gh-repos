@@ -88,9 +88,9 @@ function createRepoItem(
     topicsEl.classList.add('hidden');
   }
 
-  const visibility = article.querySelector('.visibility')!;
-  if (repo.visibility) {
-    visibility.textContent = repo.visibility;
+  const visibility = article.querySelector('.visibility-private')!;
+  if (repo.visibility === 'private') {
+    visibility.classList.remove('hidden');
   } else {
     visibility.classList.add('hidden');
   }
