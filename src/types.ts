@@ -1,4 +1,9 @@
 import { RestEndpointMethodTypes } from '@octokit/rest';
 
-export type GithubRepo =
+type GithubRepoResponse =
   RestEndpointMethodTypes['repos']['listForAuthenticatedUser']['response']['data'][number];
+
+export type GithubRepo = Pick<
+  GithubRepoResponse,
+  'name' | 'description' | 'updated_at' | 'topics' | 'visibility' | 'html_url'
+>;

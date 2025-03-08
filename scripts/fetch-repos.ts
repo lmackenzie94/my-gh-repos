@@ -10,7 +10,13 @@ const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN
 });
 
+const USERNAME = process.env.GITHUB_USERNAME;
+
 async function fetchAllData() {
+  if (!USERNAME) {
+    throw new Error('GITHUB_USERNAME is not set');
+  }
+
   try {
     // Fetch repositories
     const allRepos: GithubRepo[] = [];
@@ -19,7 +25,7 @@ async function fetchAllData() {
     while (true) {
       console.log(`Fetching page ${page}...`);
       const response = await octokit.rest.repos.listForAuthenticatedUser({
-        username: process.env.GITHUB_USERNAME,
+        username: USERNAME,
         type: 'owner',
         sort: 'created',
         direction: 'desc',
@@ -27,7 +33,16 @@ async function fetchAllData() {
         page: page
       });
 
-      allRepos.push(...response.data);
+      const repos: GithubRepo[] = response.data.map(repo => ({
+        name: repo.name,
+        description: repo.description,
+        updated_at: repo.updated_at,
+        topics: repo.topics || [],
+        visibility: repo.visibility,
+        html_url: repo.html_url
+      }));
+
+      allRepos.push(...repos);
       if (response.data.length < 100) break;
       page++;
     }
@@ -36,8 +51,8 @@ async function fetchAllData() {
     const languagesMap = new Map();
     for (const repo of allRepos) {
       console.log(`Fetching languages for ${repo.name}...`);
-      const languages = await octokit.repos.listLanguages({
-        owner: repo.owner.login,
+      const languages = await octokit.rest.repos.listLanguages({
+        owner: USERNAME,
         repo: repo.name
       });
       languagesMap.set(repo.name, Object.keys(languages.data));
