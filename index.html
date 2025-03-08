@@ -3,33 +3,34 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Luke's Github Repos</title>
+  <link rel="stylesheet" type='text/css' href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
 </head>
 
 <body>
-  <h1>Luke's Github Repos</h1>
-  <div>
-    <select id="language-filter" class="hidden">
+  <header>
+    <h1 class="text-2xl font-bold text-center mb-12 bg-gray-900 text-white py-2">Luke's Github Repos</h1>
+  </header>
+  <div class="flex justify-center gap-2 mb-4">
+    <select id="language-filter" class="border border-gray-300 rounded-md p-2 bg-white">
       <option value="all">All Languages</option>
     </select>
-    <select id="topic-filter" class="hidden">
+    <select id="topic-filter" class="border border-gray-300 rounded-md p-2 bg-white">
       <option value="all">All Topics</option>
     </select>
   </div>
-  <div id="repos">
-    <div class="loading">Loading ...</div>
-  </div>
+  <main id="repos" class="container mx-auto grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+  </main>
 
   <template id="repo-template">
     <article class="repo-item">
-      <h3><a target="_blank"></a></h3>
-      <p class="description hidden"></p>
-      <p class="updated hidden">Last updated: <time></time></p>
-      <p class="languages hidden">Language(s): <span></span></p>
-      <p class="topics hidden">Topics: <span></span></p>
-      <p class="visibility hidden"></p>
+      <h3 class="text-lg font-bold"><a target="_blank"></a></h3>
+      <p class="description text-sm text-blue-500"></p>
+      <p class="updated text-sm">Updated: <time class="text-gray-500"></time></p>
+      <p class="languages text-base flex flex-wrap gap-1"></p>
+      <p class="topics text-sm">Topics: <span class="text-gray-500"></span></p>
+      <p class="visibility text-sm"></p>
     </article>
   </template>
 

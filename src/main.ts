@@ -1,6 +1,7 @@
 import './style.css';
 import { getRepositories, getRepoLanguages, getRepoTopics } from './api';
 import type { GithubRepo } from './types';
+import { DEV_ICONS_MAP } from './constants';
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString();
 
@@ -11,23 +12,10 @@ function appendRepositoriesToDOM(
 ) {
   const reposContainer = document.getElementById('repos');
   if (reposContainer) {
-    reposContainer.innerHTML = '';
     repositories.forEach(repo => {
       const repoItem = createRepoItem(repo, languages, topics);
       reposContainer.appendChild(repoItem);
     });
-  }
-
-  // show the language filter
-  const languageFilter = document.getElementById('language-filter');
-  if (languageFilter) {
-    languageFilter.classList.remove('hidden');
-  }
-
-  // show the topic filter
-  const topicFilter = document.getElementById('topic-filter');
-  if (topicFilter) {
-    topicFilter.classList.remove('hidden');
   }
 }
 
@@ -55,31 +43,56 @@ function createRepoItem(
   const description = article.querySelector('.description')!;
   if (repo.description) {
     description.textContent = repo.description;
-    description.classList.remove('hidden');
+  } else {
+    description.classList.add('hidden');
   }
 
   const updated = article.querySelector('.updated')!;
   if (repo.updated_at) {
     updated.querySelector('time')!.textContent = formatDate(repo.updated_at);
-    updated.classList.remove('hidden');
+  } else {
+    updated.classList.add('hidden');
   }
 
   const languagesEl = article.querySelector('.languages')!;
   if (repoLanguages.length) {
-    languagesEl.querySelector('span')!.textContent = repoLanguages.join(', ');
-    languagesEl.classList.remove('hidden');
+    repoLanguages.forEach(language => {
+      // <i class="devicon-javascript-plain colored"></i>
+      const languageIcon =
+        DEV_ICONS_MAP[language as keyof typeof DEV_ICONS_MAP];
+      if (languageIcon) {
+        const icon = document.createElement('i') as HTMLElement;
+        icon.classList.add(`devicon-${languageIcon}`);
+        icon.classList.add('colored');
+        icon.classList.add('border');
+        icon.classList.add('border-gray-300');
+        icon.classList.add('rounded-md');
+        icon.classList.add('p-1');
+
+        icon.title = language;
+        languagesEl.appendChild(icon);
+      } else {
+        const span = document.createElement('span');
+        span.textContent = language;
+        languagesEl.appendChild(span);
+      }
+    });
+  } else {
+    languagesEl.classList.add('hidden');
   }
 
   const topicsEl = article.querySelector('.topics')!;
   if (repoTopics.length) {
     topicsEl.querySelector('span')!.textContent = repoTopics.join(', ');
-    topicsEl.classList.remove('hidden');
+  } else {
+    topicsEl.classList.add('hidden');
   }
 
   const visibility = article.querySelector('.visibility')!;
   if (repo.visibility) {
     visibility.textContent = repo.visibility;
-    visibility.classList.remove('hidden');
+  } else {
+    visibility.classList.add('hidden');
   }
 
   return repoItem;

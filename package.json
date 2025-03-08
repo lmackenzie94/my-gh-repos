@@ -18,6 +18,8 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
-    "@octokit/rest": "^21.1.1"
+    "@octokit/rest": "^21.1.1",
+    "@tailwindcss/vite": "^4.0.12",
+    "tailwindcss": "^4.0.12"
   }
 }
