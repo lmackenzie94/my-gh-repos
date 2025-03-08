@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Luke's Github Repos</title>
+</head>
+
+<body>
+  <h1>Luke's Github Repos</h1>
+  <div>
+    <select id="language-filter" class="hidden">
+      <option value="all">All Languages</option>
+    </select>
+    <select id="topic-filter" class="hidden">
+      <option value="all">All Topics</option>
+    </select>
+  </div>
+  <div id="repos">
+    <div class="loading">Loading ...</div>
+  </div>
+
+  <template id="repo-template">
+    <article class="repo-item">
+      <h3><a target="_blank"></a></h3>
+      <p class="description hidden"></p>
+      <p class="updated hidden">Last updated: <time></time></p>
+      <p class="languages hidden">Language(s): <span></span></p>
+      <p class="topics hidden">Topics: <span></span></p>
+      <p class="visibility hidden"></p>
+    </article>
+  </template>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
