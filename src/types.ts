@@ -5,7 +5,13 @@ type GithubRepoResponse =
 
 export type GithubRepo = Pick<
   GithubRepoResponse,
-  'name' | 'description' | 'updated_at' | 'topics' | 'visibility' | 'html_url'
+  | 'name'
+  | 'description'
+  | 'updated_at'
+  | 'topics'
+  | 'visibility'
+  | 'html_url'
+  | 'homepage'
 > & {
   languages: string[];
 };

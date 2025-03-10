@@ -1,7 +1,7 @@
 import './style.css';
 import { getRepositories, getRepoLanguages, getRepoTopics } from './api';
 import type { GithubRepo } from './types';
-import { DEV_ICONS_MAP } from './constants';
+import { LANGUAGE_ICONS_MAP } from './constants';
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString();
 
@@ -36,15 +36,28 @@ function createRepoItem(
   const repoTopics = topics.get(repo.name) || [];
   article.dataset.topics = repoTopics.join(', ');
 
-  const link = article.querySelector('a')!;
-  link.href = repo.html_url;
-  link.textContent = repo.name;
+  const repoLink = article.querySelector('.repo-link')! as HTMLAnchorElement;
+  repoLink.href = repo.html_url;
+  repoLink.textContent = repo.name;
+
+  article.dataset.visibility = repo.visibility;
 
   const description = article.querySelector('.description')!;
   if (repo.description) {
     description.textContent = repo.description;
   } else {
     description.classList.add('hidden');
+  }
+
+  const homepageLink = article.querySelector(
+    '.homepage-link'
+  )! as HTMLAnchorElement;
+  if (repo.homepage) {
+    homepageLink.href = repo.homepage;
+    homepageLink.textContent = repo.homepage.replace('https://', '');
+    homepageLink.classList.add('inline-block');
+  } else {
+    homepageLink.classList.add('hidden');
   }
 
   const updated = article.querySelector('.updated')!;
@@ -59,7 +72,7 @@ function createRepoItem(
     repoLanguages.forEach(language => {
       // <i class="devicon-javascript-plain colored"></i>
       const languageIcon =
-        DEV_ICONS_MAP[language as keyof typeof DEV_ICONS_MAP];
+        LANGUAGE_ICONS_MAP[language as keyof typeof LANGUAGE_ICONS_MAP];
       if (languageIcon) {
         const icon = document.createElement('i') as HTMLElement;
         icon.classList.add(`devicon-${languageIcon}`);
@@ -83,7 +96,12 @@ function createRepoItem(
 
   const topicsEl = article.querySelector('.topics')!;
   if (repoTopics.length) {
-    topicsEl.querySelector('span')!.textContent = repoTopics.join(', ');
+    repoTopics.forEach(topic => {
+      const topicEl = document.createElement('span');
+      topicEl.classList.add('topic');
+      topicEl.textContent = topic;
+      topicsEl.appendChild(topicEl);
+    });
   } else {
     topicsEl.classList.add('hidden');
   }
@@ -145,7 +163,7 @@ function handleLanguageFilterChange(event: Event) {
 
   if (selectedLanguage === 'all') {
     repoElements.forEach(repoElement => {
-      repoElement.style.display = 'block';
+      repoElement.classList.remove('hidden');
     });
     return;
   }
@@ -153,9 +171,9 @@ function handleLanguageFilterChange(event: Event) {
   repoElements.forEach(repoElement => {
     const repoLanguages = repoElement.dataset.language?.split(', ');
     if (repoLanguages?.includes(selectedLanguage)) {
-      repoElement.style.display = 'block';
+      repoElement.classList.remove('hidden');
     } else {
-      repoElement.style.display = 'none';
+      repoElement.classList.add('hidden');
     }
   });
 }
@@ -175,7 +193,7 @@ function handleTopicFilterChange(event: Event) {
 
   if (selectedTopic === 'all') {
     repoElements.forEach(repoElement => {
-      repoElement.style.display = 'block';
+      repoElement.classList.remove('hidden');
     });
     return;
   }
@@ -183,9 +201,35 @@ function handleTopicFilterChange(event: Event) {
   repoElements.forEach(repoElement => {
     const repoTopics = repoElement.dataset.topics?.split(', ');
     if (repoTopics?.includes(selectedTopic)) {
-      repoElement.style.display = 'block';
+      repoElement.classList.remove('hidden');
     } else {
-      repoElement.style.display = 'none';
+      repoElement.classList.add('hidden');
+    }
+  });
+}
+
+function setupHidePrivateCheckbox() {
+  const hidePrivateCheckbox = document.getElementById(
+    'hide-private'
+  ) as HTMLInputElement;
+  if (hidePrivateCheckbox) {
+    hidePrivateCheckbox.addEventListener(
+      'change',
+      handleHidePrivateCheckboxChange
+    );
+  }
+}
+
+function handleHidePrivateCheckboxChange(event: Event) {
+  const isChecked = (event.target as HTMLInputElement).checked;
+  const repoElements: NodeListOf<HTMLElement> =
+    document.querySelectorAll('.repo-item');
+  repoElements.forEach(repoElement => {
+    const repoVisibility = repoElement.dataset.visibility;
+    if (isChecked && repoVisibility === 'private') {
+      repoElement.classList.add('hidden');
+    } else {
+      repoElement.classList.remove('hidden');
     }
   });
 }
@@ -197,3 +241,4 @@ const topics = getRepoTopics();
 appendRepositoriesToDOM(repos, languages, topics);
 setupLanguageFilter(languages);
 setupTopicFilter(topics);
+setupHidePrivateCheckbox();

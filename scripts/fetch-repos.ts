@@ -40,6 +40,7 @@ async function fetchAllData() {
         topics: repo.topics || [],
         visibility: repo.visibility,
         html_url: repo.html_url,
+        homepage: repo.homepage,
         languages: [] // populated below
       }));
 
