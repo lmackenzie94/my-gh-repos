@@ -2,8 +2,18 @@ import './style.css';
 import { getRepositories, getRepoLanguages, getRepoTopics } from './api';
 import type { GithubRepo } from './types';
 import { LANGUAGE_ICONS_MAP } from './constants';
+import {
+  getQueryParam,
+  setQueryParam,
+  removeQueryParam,
+  formatDate
+} from './utils';
 
-const formatDate = (date: string) => new Date(date).toLocaleDateString();
+const repos = getRepositories();
+const languages = getRepoLanguages();
+const topics = getRepoTopics();
+
+let repoElements: HTMLElement[] | null = null;
 
 function appendRepositoriesToDOM(
   repositories: GithubRepo[],
@@ -16,6 +26,8 @@ function appendRepositoriesToDOM(
       const repoItem = createRepoItem(repo, languages, topics);
       reposContainer.appendChild(repoItem);
     });
+
+    repoElements = Array.from(document.querySelectorAll('.repo-item'));
   }
 }
 
@@ -117,7 +129,9 @@ function createRepoItem(
 }
 
 function setupLanguageFilter(languages: Map<string, string[]>) {
-  const languageFilter = document.getElementById('language-filter');
+  const languageFilter = document.getElementById(
+    'language-filter'
+  ) as HTMLSelectElement;
   if (languageFilter) {
     const uniqueLanguages = [...new Set([...languages.values()].flat())].sort();
 
@@ -129,11 +143,14 @@ function setupLanguageFilter(languages: Map<string, string[]>) {
     });
 
     languageFilter.addEventListener('change', handleLanguageFilterChange);
+    languageFilter.value = getQueryParam('language') || 'all';
   }
 }
 
 function setupTopicFilter(topics: Map<string, string[]>) {
-  const topicFilter = document.getElementById('topic-filter');
+  const topicFilter = document.getElementById(
+    'topic-filter'
+  ) as HTMLSelectElement;
   if (topicFilter) {
     const uniqueTopics = [...new Set([...topics.values()].flat())].sort();
 
@@ -145,100 +162,73 @@ function setupTopicFilter(topics: Map<string, string[]>) {
     });
 
     topicFilter.addEventListener('change', handleTopicFilterChange);
+    topicFilter.value = getQueryParam('topic') || 'all';
   }
 }
 
 function handleLanguageFilterChange(event: Event) {
-  // set topic filter to all
-  const topicFilter = document.getElementById(
-    'topic-filter'
-  ) as HTMLSelectElement;
-  if (topicFilter) {
-    topicFilter.value = 'all';
-  }
-
   const selectedLanguage = (event.target as HTMLSelectElement).value;
-  const repoElements: NodeListOf<HTMLElement> =
-    document.querySelectorAll('.repo-item');
 
   if (selectedLanguage === 'all') {
-    repoElements.forEach(repoElement => {
+    removeQueryParam('language');
+    repoElements?.forEach(repoElement => {
       repoElement.classList.remove('hidden');
     });
     return;
   }
 
-  repoElements.forEach(repoElement => {
-    const repoLanguages = repoElement.dataset.language?.split(', ');
-    if (repoLanguages?.includes(selectedLanguage)) {
-      repoElement.classList.remove('hidden');
-    } else {
-      repoElement.classList.add('hidden');
-    }
-  });
+  setQueryParam('language', selectedLanguage);
+  filterRepositories();
 }
 
 function handleTopicFilterChange(event: Event) {
-  // set language filter to all
-  const languageFilter = document.getElementById(
-    'language-filter'
-  ) as HTMLSelectElement;
-  if (languageFilter) {
-    languageFilter.value = 'all';
-  }
-
   const selectedTopic = (event.target as HTMLSelectElement).value;
-  const repoElements: NodeListOf<HTMLElement> =
-    document.querySelectorAll('.repo-item');
 
   if (selectedTopic === 'all') {
-    repoElements.forEach(repoElement => {
+    removeQueryParam('topic');
+    repoElements?.forEach(repoElement => {
       repoElement.classList.remove('hidden');
     });
     return;
   }
 
-  repoElements.forEach(repoElement => {
-    const repoTopics = repoElement.dataset.topics?.split(', ');
-    if (repoTopics?.includes(selectedTopic)) {
-      repoElement.classList.remove('hidden');
-    } else {
-      repoElement.classList.add('hidden');
-    }
-  });
+  setQueryParam('topic', selectedTopic);
+  filterRepositories();
 }
 
-function setupHidePrivateCheckbox() {
-  const hidePrivateCheckbox = document.getElementById(
-    'hide-private'
-  ) as HTMLInputElement;
-  if (hidePrivateCheckbox) {
-    hidePrivateCheckbox.addEventListener(
-      'change',
-      handleHidePrivateCheckboxChange
-    );
+function filterRepositories() {
+  const language = getQueryParam('language');
+  const topic = getQueryParam('topic');
+
+  if (!language && !topic) {
+    repoElements?.forEach(repoElement => {
+      repoElement.classList.remove('hidden');
+    });
+    return;
   }
-}
 
-function handleHidePrivateCheckboxChange(event: Event) {
-  const isChecked = (event.target as HTMLInputElement).checked;
-  const repoElements: NodeListOf<HTMLElement> =
-    document.querySelectorAll('.repo-item');
-  repoElements.forEach(repoElement => {
-    const repoVisibility = repoElement.dataset.visibility;
-    if (isChecked && repoVisibility === 'private') {
-      repoElement.classList.add('hidden');
-    } else {
+  repoElements?.forEach(repoElement => {
+    const repoLanguages = repoElement.dataset.language?.split(', ');
+    const repoTopics = repoElement.dataset.topics?.split(', ');
+
+    const isLanguageMatch = !language || repoLanguages?.includes(language);
+    const isTopicMatch = !topic || repoTopics?.includes(topic);
+
+    if (isLanguageMatch && isTopicMatch) {
       repoElement.classList.remove('hidden');
+    } else {
+      repoElement.classList.add('hidden');
     }
   });
 }
-
-const repos = getRepositories();
-const languages = getRepoLanguages();
-const topics = getRepoTopics();
 
 appendRepositoriesToDOM(repos, languages, topics);
 setupLanguageFilter(languages);
 setupTopicFilter(topics);
-setupHidePrivateCheckbox();
+
+const initialLanguage = getQueryParam('language');
+const initialTopic = getQueryParam('topic');
+
+if (initialLanguage || initialTopic) {
+  filterRepositories();
+}

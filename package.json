@@ -6,6 +6,7 @@
   "scripts": {
     "predev": "tsx scripts/check-data.ts",
     "dev": "vite",
+    "dev:refresh": "rm -rf src/data && pnpm dev",
     "prebuild": "tsx scripts/fetch-repos.ts",
     "build": "vite build",
     "preview": "vite preview"
