@@ -24,6 +24,8 @@ async function fetchAllData() {
 
     while (true) {
       console.log(`Fetching page ${page}...`);
+
+      // don't include archived repos
       const response = await octokit.rest.repos.listForAuthenticatedUser({
         username: USERNAME,
         type: 'owner',
@@ -33,16 +35,18 @@ async function fetchAllData() {
         page: page
       });
 
-      const repos: GithubRepo[] = response.data.map(repo => ({
-        name: repo.name,
-        description: repo.description,
-        updated_at: repo.updated_at,
-        topics: repo.topics || [],
-        visibility: repo.visibility,
-        html_url: repo.html_url,
-        homepage: repo.homepage,
-        languages: [] // populated below
-      }));
+      const repos: GithubRepo[] = response.data
+        .filter(repo => !repo.archived) // Remove archived repos
+        .map(repo => ({
+          name: repo.name,
+          description: repo.description,
+          updated_at: repo.updated_at,
+          topics: repo.topics || [],
+          visibility: repo.visibility,
+          html_url: repo.html_url,
+          homepage: repo.homepage,
+          languages: [] // populated below
+        }));
 
       allRepos.push(...repos);
       if (response.data.length < 100) break;

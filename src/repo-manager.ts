@@ -12,45 +12,52 @@ enum Filter {
   TOPIC = 'topic'
 }
 
+interface FilterState {
+  [Filter.LANGUAGE]: string;
+  [Filter.TOPIC]: string;
+}
+
+interface RepoManagerConfig {
+  repos: GithubRepo[];
+  reposContainer: HTMLElement;
+  repoTemplate: HTMLTemplateElement;
+  filterElements: {
+    languageFilter: HTMLSelectElement;
+    topicFilter: HTMLSelectElement;
+  };
+}
+
 export class RepoManager {
-  private repos: GithubRepo[] = [];
-  private reposContainer: HTMLElement;
-  private repoTemplate: HTMLTemplateElement;
-  private repoElements: HTMLElement[] = [];
+  private readonly repos: GithubRepo[] = [];
+  private readonly reposContainer: HTMLElement;
+  private readonly repoTemplate: HTMLTemplateElement;
+  private readonly filterElements: Map<Filter, HTMLSelectElement> = new Map();
+  private readonly repoElements: HTMLElement[] = [];
 
-  private filterElements: Map<Filter, HTMLSelectElement> = new Map();
-
-  private filters: {
-    [key in Filter]: string | null;
-  } = {
-    [Filter.LANGUAGE]: null,
-    [Filter.TOPIC]: null
+  private filters: FilterState = {
+    [Filter.LANGUAGE]: '',
+    [Filter.TOPIC]: ''
   };
 
   private languagesMap: Map<string, string[]>;
   private topicsMap: Map<string, string[]>;
 
-  constructor(repos: GithubRepo[]) {
+  constructor(config: RepoManagerConfig) {
     // get repos
-    this.repos = repos;
+    this.repos = config.repos;
 
     // get DOM elements
-    this.reposContainer = document.getElementById('repos')!;
+    this.reposContainer = config.reposContainer;
+    this.repoTemplate = config.repoTemplate;
 
-    const languageFilter = document.getElementById(
-      'language-filter'
-    )! as HTMLSelectElement;
-    const topicFilter = document.getElementById(
-      'topic-filter'
-    )! as HTMLSelectElement;
-    this.filterElements.set(Filter.LANGUAGE, languageFilter);
-    this.filterElements.set(Filter.TOPIC, topicFilter);
+    // setup filter elements
+    this.filterElements.set(
+      Filter.LANGUAGE,
+      config.filterElements.languageFilter
+    );
+    this.filterElements.set(Filter.TOPIC, config.filterElements.topicFilter);
 
-    this.repoTemplate = document.getElementById(
-      'repo-template'
-    )! as HTMLTemplateElement;
-
-    // setup event listeners
+    // setup filter event listeners
     this.filterElements.forEach((filter, type) => {
       filter.addEventListener(
         'change',
@@ -59,22 +66,14 @@ export class RepoManager {
     });
 
     // set language and topic maps
-    this.languagesMap = new Map(
-      this.repos.map(repo => [
-        repo.name,
-        repo.languages.filter(language => !LANGUAGES_TO_HIDE.includes(language))
-      ])
-    );
-
-    this.topicsMap = new Map(
-      this.repos.map(repo => [repo.name, repo.topics || []])
-    );
+    this.languagesMap = this.createLanguagesMap();
+    this.topicsMap = this.createTopicsMap();
 
     // init
     this.init();
   }
 
-  init() {
+  private init() {
     // populate filters
     this.populateFilters();
 
@@ -82,8 +81,8 @@ export class RepoManager {
     this.createRepoElements();
 
     // Set initial filters
-    const initialLanguage = getQueryParam(Filter.LANGUAGE);
-    const initialTopic = getQueryParam(Filter.TOPIC);
+    const initialLanguage = getQueryParam(Filter.LANGUAGE) || '';
+    const initialTopic = getQueryParam(Filter.TOPIC) || '';
     this.setFilter(Filter.LANGUAGE, initialLanguage);
     this.setFilter(Filter.TOPIC, initialTopic);
 
@@ -92,13 +91,26 @@ export class RepoManager {
   }
 
   // repo elements without "hidden" class
-  get visibleRepos() {
+  private get visibleRepos() {
     return this.repoElements.filter(
       repoElement => !repoElement.classList.contains('hidden')
     );
   }
 
-  handleFilterChange(type: Filter, event: Event) {
+  private createLanguagesMap() {
+    return new Map(
+      this.repos.map(repo => [
+        repo.name,
+        repo.languages.filter(language => !LANGUAGES_TO_HIDE.includes(language))
+      ])
+    );
+  }
+
+  private createTopicsMap() {
+    return new Map(this.repos.map(repo => [repo.name, repo.topics || []]));
+  }
+
+  private handleFilterChange(type: Filter, event: Event) {
     const selectedValue = (event.target as HTMLSelectElement).value;
     this.setFilter(type, selectedValue);
     if (type === Filter.LANGUAGE) {
@@ -106,7 +118,7 @@ export class RepoManager {
     }
   }
 
-  populateFilters() {
+  private populateFilters() {
     // append to existing options
     const languages = this.getLanguagesList();
     const topics = this.getTopicsList();
@@ -126,7 +138,7 @@ export class RepoManager {
     });
   }
 
-  updateTopicFilterOptions() {
+  private updateTopicFilterOptions() {
     // set selected value to empty string
     this.setFilter(Filter.TOPIC, '');
 
@@ -165,15 +177,22 @@ export class RepoManager {
     });
   }
 
-  createRepoElements() {
+  private createRepoElements() {
+    // Create a lightweight container that lives in memory (not in the DOM)
+    const fragment = document.createDocumentFragment();
+
+    // Add all repo elements to the fragment (no DOM updates yet)
     this.repos.forEach(repo => {
       const repoElement = this.createRepoElement(repo);
       this.repoElements.push(repoElement);
-      this.reposContainer.appendChild(repoElement);
+      fragment.appendChild(repoElement);
     });
+
+    // Add all repo elements to the DOM at once
+    this.reposContainer.appendChild(fragment);
   }
 
-  createRepoElement(repo: GithubRepo) {
+  private createRepoElement(repo: GithubRepo) {
     const template = this.repoTemplate;
     const fragment = template.content.cloneNode(true) as DocumentFragment;
     const repoElement = fragment.querySelector('article')!;
@@ -223,26 +242,9 @@ export class RepoManager {
     const languagesEl = repoElement.querySelector('.languages')!;
     if (repoLanguages.length) {
       repoLanguages.forEach(language => {
-        // <i class="devicon-javascript-plain colored"></i>
-        const languageIcon =
-          LANGUAGE_ICONS_MAP[language as keyof typeof LANGUAGE_ICONS_MAP];
+        const languageIcon = this.createLanguageIcon(language);
         if (languageIcon) {
-          const icon = document.createElement('i') as HTMLElement;
-          icon.classList.add(
-            `devicon-${languageIcon}`,
-            'colored',
-            'border',
-            'border-gray-300',
-            'rounded-md',
-            'p-1'
-          );
-
-          icon.title = language;
-          languagesEl.appendChild(icon);
-        } else {
-          const span = document.createElement('span');
-          span.textContent = language;
-          languagesEl.appendChild(span);
+          languagesEl.appendChild(languageIcon);
         }
       });
     } else {
@@ -252,9 +254,7 @@ export class RepoManager {
     const topicsEl = repoElement.querySelector('.topics')!;
     if (repoTopics.length) {
       repoTopics.forEach(topic => {
-        const topicEl = document.createElement('span');
-        topicEl.classList.add('topic');
-        topicEl.textContent = topic;
+        const topicEl = this.createTopicPill(topic);
         topicsEl.appendChild(topicEl);
       });
     } else {
@@ -271,19 +271,45 @@ export class RepoManager {
     return repoElement;
   }
 
-  getLanguagesList(): string[] {
-    const languages = [...this.languagesMap.values()].flat();
-    const uniqueLanguages = [...new Set(languages)];
-    return uniqueLanguages.sort();
+  private createLanguageIcon(language: string): HTMLElement | null {
+    const languageIcon =
+      LANGUAGE_ICONS_MAP[language as keyof typeof LANGUAGE_ICONS_MAP];
+    if (languageIcon) {
+      const icon = document.createElement('i');
+      icon.classList.add(
+        `devicon-${languageIcon}`,
+        'colored',
+        'border',
+        'border-gray-300',
+        'rounded-md',
+        'p-1'
+      );
+      icon.title = language;
+      return icon;
+    } else {
+      console.warn(`No language icon found for ${language}`);
+      return null;
+    }
   }
 
-  getTopicsList(): string[] {
-    const topics = [...this.topicsMap.values()].flat();
-    const uniqueTopics = [...new Set(topics)];
-    return uniqueTopics.sort();
+  private createTopicPill(topic: string): HTMLElement {
+    const pill = document.createElement('span');
+    pill.classList.add('topic');
+    pill.textContent = topic;
+    return pill;
   }
 
-  setFilter(type: Filter, value: string | null) {
+  private getLanguagesList(): string[] {
+    const languages = Array.from(this.languagesMap.values()).flat();
+    return [...new Set(languages)].sort();
+  }
+
+  private getTopicsList(): string[] {
+    const topics = Array.from(this.topicsMap.values()).flat();
+    return [...new Set(topics)].sort();
+  }
+
+  private setFilter(type: Filter, value: string | '') {
     // update filters
     this.filters[type] = value;
     this.filterElements.get(type)!.value = value || '';
