@@ -3,10 +3,9 @@ import * as path from 'node:path';
 
 const dataDir = path.join(process.cwd(), 'src/data');
 const reposFile = path.join(dataDir, 'repos.json');
-const languagesFile = path.join(dataDir, 'languages.json');
 
-if (!fs.existsSync(reposFile) || !fs.existsSync(languagesFile)) {
-  console.log('🚨 Data files missing! Fetching fresh data...');
+if (!fs.existsSync(reposFile)) {
+  console.log('🚨 No repo data found! Fetching fresh data...');
   try {
     await import('./fetch-repos.js');
   } catch (error) {
@@ -14,5 +13,5 @@ if (!fs.existsSync(reposFile) || !fs.existsSync(languagesFile)) {
     process.exit(1);
   }
 } else {
-  console.log('✅ Data files found!');
+  console.log('✅ Repo data found!');
 }
