@@ -1,7 +1,5 @@
 import './style.css';
-
 import RepoManager from './repo-manager';
-import { getRepositories } from './api';
+import repos from './data/repos.json';
 
-const repos = getRepositories();
 new RepoManager(repos);

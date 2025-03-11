@@ -204,7 +204,10 @@ export class RepoManager {
     )! as HTMLAnchorElement;
     if (repo.homepage) {
       homepageLink.href = repo.homepage;
+      // remove protocol for cleaner display
       homepageLink.textContent = repo.homepage.replace('https://', '');
+      // remove trailing slash
+      homepageLink.textContent = homepageLink.textContent.replace(/\/$/, '');
       homepageLink.classList.add('inline-block');
     } else {
       homepageLink.classList.add('hidden');
