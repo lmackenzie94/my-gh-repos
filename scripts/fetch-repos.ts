@@ -29,7 +29,7 @@ async function fetchAllData() {
       const response = await octokit.rest.repos.listForAuthenticatedUser({
         username: USERNAME,
         type: 'owner',
-        sort: 'updated',
+        sort: 'created', // could also use "updated"
         direction: 'desc',
         per_page: 100,
         page: page
