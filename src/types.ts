@@ -7,6 +7,7 @@ export type GithubRepo = Pick<
   GithubRepoResponse,
   | 'name'
   | 'description'
+  | 'created_at'
   | 'updated_at'
   | 'topics'
   | 'visibility'

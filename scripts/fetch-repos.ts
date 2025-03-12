@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { GithubRepo } from '../src/types';
 import dotenv from 'dotenv';
+import { LANGUAGES_TO_HIDE } from '../src/constants';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ async function fetchAllData() {
         .map(repo => ({
           name: repo.name,
           description: repo.description,
+          created_at: repo.created_at,
           updated_at: repo.updated_at,
           topics: repo.topics || [],
           visibility: repo.visibility,
@@ -59,7 +61,12 @@ async function fetchAllData() {
         owner: USERNAME,
         repo: repo.name
       });
-      repo.languages = Object.keys(languages.data);
+
+      // remove languages that are not in the LANGUAGES_TO_HIDE array
+      const filteredLanguages = Object.keys(languages.data).filter(
+        language => !LANGUAGES_TO_HIDE.includes(language)
+      );
+      repo.languages = filteredLanguages;
     }
 
     // Create data directory if it doesn't exist
